@@ -1,24 +1,47 @@
-name: Exemplo Output
-run-name: Exemplo workflow para output, executa por ${{github.actor}}
+name: Exemplo Artifact
+run-name: Exemplo workflow para artifact, executa por ${{github.actor}}
 on:
     workflow_dispatch:
-
+env:
+    nome-artefato: teste-artefato
 jobs:
-    gerando_output:
+    upload_artifact:
+
         runs-on: ubuntu-latest
         steps:
-            - name: Gerando output com shell
-              id: exemplo-output
+            - name: Listagem de arquivs
+              run: ls
+            - name: Gerar alguns arquivos
               run: |
-                ACTION_RANDOM=$(( $RANDOM ))
-                echo "action_random=$ACTION_RANDOM" >> $GITHUB_OUTPUT
+                mkdir artefatos
+                echo "Arquivo de teste 01" > ./artefatos/primeiro_arquivo.txt
+                echo "Arquivo de teste 02" > ./artefatos/segundo_arquivo.txt
+                echo "Arquivo de teste 03" > ./artefatos/terceiro_arquivo.txt
+                echo "Arquivo de teste 04" > ./artefatos/quarto_arquivo.txt
+            - name: Envio dos arquivos
+              uses: actions/upload-artifact@v4
+              id: upload-artifact
+              with: 
+                name: ${{env.nome-artefato}}
+                path: ./artefatos
 
-            - name: Exibindo o ouput da action exemplo output
-              run: echo "${{ steps.exemplo-output.outputs.action_random }}"
-            - name: Gerador de senha
-              id: generatedpassword
-              uses: aammirmirza/RandomPasswordGenerator@v1.1
+            - name: Listagem de arquivo
+              run: ls
+
+            - name: Endereço para obtr os artefatos
+              run: |
+                echo "${{ steps.upload_artifact.outputs.artifact-url}}"
+    download-artifact:
+        runs-on: ubuntu-latest
+        needs: [upload_artifact]
+        steps:
+            - name: Listagem de arquivos
+              run: ls
+
+            - name: Download Artifacts
+              uses: actions/download-artifact@v4
               with:
-                length: 15
-            - name: Exibindo o output da Action de password
-              run: echo "${{steps.generatedpassword.outputs.password}}"
+                name: ${{env.nome-artefato}}
+            
+            - name: Listagem de arquivos
+              run: ls
